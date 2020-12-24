@@ -94,27 +94,6 @@ class AOC {
 
         return accumulator;
     }
-
-    boolean hasInfiniteLoop(List<String> instructionSet) {
-        boolean[] visited = new boolean[instructionSet.size()];
-        int line = 0;
-        while (line < instructionSet.size()) {
-            String currentInstruction = instructionSet.get(line);
-            if (visited[line]) {
-                return true;
-            }
-            visited[line] = true;
-            if (!currentInstruction.contains("jmp")) {
-                line++;
-                continue;
-            } else if (currentInstruction.contains("jmp")) {
-                int value = Integer.parseInt(currentInstruction.split(" ")[1]);
-                line += value;
-            }
-        }
-
-        return false;
-    }
 }
 
 
