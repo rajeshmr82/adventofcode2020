@@ -147,10 +147,13 @@ class AOC {
             }
         }
         HashSet<Integer> considered = new HashSet<>();
-        while (!isComplete(candidates)){
+        boolean hasChanged = true;
+        while (hasChanged){
+            hasChanged=false;
             for (int i = 0; i < candidates.length; i++) {
                 int count=0;
                 int indexOfSingle =-1;
+                
                 for (int j = 0; j < candidates.length; j++) {
                     if(candidates[i][j]){
                         count++;
@@ -159,6 +162,7 @@ class AOC {
                 }
                 if(count==1 && !considered.contains(indexOfSingle)){
                     considered.add(indexOfSingle);
+                    hasChanged=true;
                     for (int k = 0; k < candidates.length; k++) {
                         if(k!=i){
                             candidates[k][indexOfSingle]=false;
@@ -184,29 +188,7 @@ class AOC {
         return result;
     }
 
-    private boolean isComplete(boolean[][] candidates){
-        boolean completed=true;
-        for (boolean[] matches:
-             candidates) {
-            int count=0;
-            for (boolean match:
-                 matches) {
-                if(match){
-                    count++;
-                    if(count>1){
-                        break;
-                    }
-                }
-            }
 
-            if(count>1){
-                completed=false;
-                break;
-            }
-        }
-
-        return completed;
-    }
 
     private void readInput(List<String> input, List<Rule> rules, List<String> nearBy,List<String> myTicket) {
         boolean loadRules = true;
