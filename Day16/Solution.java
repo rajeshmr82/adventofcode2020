@@ -189,7 +189,6 @@ class AOC {
     }
 
 
-
     private void readInput(List<String> input, List<Rule> rules, List<String> nearBy,List<String> myTicket) {
         boolean loadRules = true;
         boolean loadMyTicket = false;
