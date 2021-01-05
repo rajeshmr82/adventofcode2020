@@ -18,16 +18,17 @@ class Solution {
 
         AOC aoc = new AOC();
         //Part 1
-        System.out.println("Part 1 - " + aoc.findActive(input,6));
+        System.out.println("Part 1 - " + aoc.findActive(input,6,3));
         //Part 2
-
+        System.out.println("Part 2 - " + aoc.findActive(input,6,4));
     }
 }
 
 class AOC {
     final char ACTIVE = '#';
     HashMap<Coordinate,Boolean> grid = new HashMap<>();
-    public int findActive(List<String> input, int n) {
+    public int findActive(List<String> input, int n, int dimension) {
+        grid.clear();
         int activeCount = 0;
         for (int i = 0; i < input.size(); i++) {
             for (int j = 0; j < input.size(); j++) {
@@ -44,7 +45,7 @@ class AOC {
             }
             HashSet<Coordinate> neighbours = new HashSet<>();
             for (Coordinate point : grid.keySet()) {
-                int activeNeighbours = getActiveNeighbours(point);
+                int activeNeighbours = getActiveNeighbours(point,dimension);
                 if (newGrid.get(point)) {
                     if (activeNeighbours != 2 && activeNeighbours != 3) {
                         newGrid.remove(point);
@@ -55,7 +56,7 @@ class AOC {
                     }
                 }
 
-                for (Coordinate cube : getNeighbours(point)) {
+                for (Coordinate cube : getNeighbours(point,dimension)) {
                     if (!grid.containsKey(cube)) {
                         neighbours.add(cube);
                     }
@@ -63,7 +64,7 @@ class AOC {
             }
 
             for (Coordinate point : neighbours) {
-                if (getActiveNeighbours(point) == 3) {
+                if (getActiveNeighbours(point,dimension) == 3) {
                     newGrid.put(point, true);
                 }
             }
@@ -74,8 +75,8 @@ class AOC {
         return grid.size();
     }
 
-    int getActiveNeighbours(Coordinate point){
-        List<Coordinate> neighbours = getNeighbours(point);
+    int getActiveNeighbours(Coordinate point, int dimension){
+        List<Coordinate> neighbours = getNeighbours(point,dimension);
         int activeCount=0;
         for (Coordinate n:neighbours) {
             if(grid.containsKey(n)){
@@ -88,16 +89,20 @@ class AOC {
         return activeCount;
     }
 
-    List<Coordinate> getNeighbours(Coordinate point) {
+    List<Coordinate> getNeighbours(Coordinate point, int dimension) {
         List<Coordinate> neighbours = new ArrayList<>();
         int activeCount = 0;
         for (int xOffset = -1; xOffset <= 1; xOffset++) {
             for (int yOffset = -1; yOffset <= 1; yOffset++) {
                 for (int zOffset = -1; zOffset <= 1; zOffset++) {
                     for (int wOffset = -1; wOffset <= 1; wOffset++) {
+                        if(dimension!=4 && wOffset!=0){
+                            continue;
+                        }
                         if (xOffset == 0 && yOffset == 0 && zOffset == 0 && wOffset == 0) {
                             continue;
                         }
+
                         neighbours.add(new Coordinate(point.getX() + xOffset,
                                         point.getY() + yOffset,
                                         point.getZ() + zOffset,
