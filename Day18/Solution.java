@@ -45,25 +45,6 @@ class AOC {
         this.changePrecedence = changePrecedence;
     }
 
-    interface Operand {
-        public long value();
-    }
-    class Number implements Operand{
-        private long value;
-
-        public Number(String token) {
-            this.value = Long.parseLong(token);
-        }
-
-        public Number(long number){
-            this.value = number;
-        }
-
-        @Override
-        public long value() {
-            return this.value;
-        }
-    }
 
     interface Operator{
         public long operate(long a, long b);
