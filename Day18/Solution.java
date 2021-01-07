@@ -84,14 +84,14 @@ class AOC {
     }
 
     class Expression{
-        private List<Operand> operandList = new ArrayList<>();
+        private List<Long> operandList = new ArrayList<>();
         private List<Operator> operatorList = new ArrayList<>();
 
-        public void addOperands(Operand operand){
+        public void addOperands(long operand){
             operandList.add(operand);
         }
 
-        public Operand popOperand(){
+        public long popOperand(){
             return operandList.remove(operandList.size()-1);
         }
 
@@ -102,26 +102,26 @@ class AOC {
         public long evaluate(){
             long result=0;
             if(!changePrecedence) {
-                result = this.operandList.get(0).value();
+                result = this.operandList.get(0);
                 for (int i = 1; i < this.operandList.size(); i++) {
-                    result = operatorList.get(i - 1).operate(result, operandList.get(i).value());
+                    result = operatorList.get(i - 1).operate(result, operandList.get(i));
                 }
             }else{
 
                 for (int i = 1; i < this.operandList.size(); i++) {
                     if(operatorList.get(i-1).getClass().equals(Add.class)){
-                        long prev = this.operandList.get(i-1).value();
-                        long curr = this.operandList.get(i).value();
-                        Number newValue = new Number(new Add().operate(prev,curr));
+                        long prev = this.operandList.get(i-1);
+                        long curr = this.operandList.get(i);
+                        long newValue = new Add().operate(prev,curr);
                         operandList.remove(i);
                         this.operandList.set(i-1,newValue);
                         operatorList.remove(i-1);
                         i--;
                     }
                 }
-                result = this.operandList.get(0).value();
+                result = this.operandList.get(0);
                 for (int i = 1; i < this.operandList.size(); i++) {
-                    result = new Multiply().operate(result, operandList.get(i).value());
+                    result = new Multiply().operate(result, operandList.get(i));
                 }
             }
             return result;
@@ -151,7 +151,7 @@ class AOC {
                     break;
                 case ")":
                     Expression innerExpr = stack.pop();
-                    stack.peek().addOperands(new Number(innerExpr.evaluate()));
+                    stack.peek().addOperands(innerExpr.evaluate());
                     break;
                 case "+":
                     stack.peek().addOperator(new Add());
@@ -160,7 +160,7 @@ class AOC {
                     stack.peek().addOperator(new Multiply());
                     break;
                 default:
-                    stack.peek().addOperands(new Number(token));
+                    stack.peek().addOperands(Long.parseLong(token));
                     break;
             }
         }
