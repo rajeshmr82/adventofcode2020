@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 class Solution {
     public static void main(String[] args) throws IOException {
-        File inputFile = new File(Objects.requireNonNull(Solution.class.getClassLoader().getResource("aoc19.txt")).getFile());
+        File inputFile = new File(Objects.requireNonNull(Solution.class.getClassLoader().getResource("aoc19_part2_simple.txt")).getFile());
         InputStream inputStream = new FileInputStream(inputFile);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
@@ -21,10 +21,20 @@ class Solution {
 
         AOC aoc = new AOC();
         //Part 1
-        System.out.println("Part 1 - " + aoc.findValidInputs(input));
+        //System.out.println("Part 1 - " + aoc.findValidInputs(input));
         //Part 2
-        System.out.println("Part 2 - " + aoc.findValidInputsWithUpdates(input));
-
+        //System.out.println("Part 2 - " + aoc.findValidInputsWithUpdates(input));
+        aoc.parseRuleInput(input);
+        aoc.rules.get("8").getRules().add(new ArrayList<>(Arrays.asList(
+                "42",
+                "8"
+        )));
+        aoc.rules.get("11").getRules().add(new ArrayList<>(Arrays.asList(
+                "42",
+                "11",
+                "31"
+        )));
+        System.out.println(aoc.matchRule("babbbbaabbbbbabbbbbbaabaaabaaa", "0"));
     }
 }
 
@@ -138,12 +148,12 @@ class AOC {
 
         for (List<String> childRules :
                 rule.getRules()) {
-            List<Integer> candidateMatches = new ArrayList<>(Arrays.asList(0));
+            List<Integer> matchLengths = new ArrayList<>(Arrays.asList(0));
             for (String child :
                     childRules) {
-                List<Integer> newCandidateMatches = new ArrayList<>();
+                List<Integer> newCandidateLengths = new ArrayList<>();
                 for (Integer m :
-                        candidateMatches) {
+                        matchLengths) {
                     var matches = matchRule(message.substring(m), child);
                     if (matches.size() == 0) {
                         continue;
@@ -151,14 +161,14 @@ class AOC {
 
                     for (Integer matchCount :
                             matches) {
-                        newCandidateMatches.add(matchCount + m);
+                        newCandidateLengths.add(matchCount + m);
                     }
                 }
-                candidateMatches = newCandidateMatches;
+                matchLengths = newCandidateLengths;
             }
-            result.addAll(candidateMatches);
+            result.addAll(matchLengths);
         }
-        //System.out.println(message + " - " + ruleNo+ " - " + result);
+        System.out.println(message + " - " + ruleNo+ " - " + result);
         return result;
     }
 
