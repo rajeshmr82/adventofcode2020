@@ -1,7 +1,6 @@
 import java.io.*;
 import java.util.*;
 
-
 class Solution {
     public static void main(String[] args) throws IOException {
         File inputFile=new File(Solution.class.getClassLoader().getResource("aoc2.txt").getFile());
