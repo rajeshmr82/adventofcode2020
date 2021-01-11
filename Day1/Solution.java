@@ -47,5 +47,3 @@ class AOC {
         return -1;
     }
 }
-
-
