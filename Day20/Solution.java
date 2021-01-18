@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 
 class Solution {
     public static void main(String[] args) throws IOException {
-        File inputFile = new File(Objects.requireNonNull(Solution.class.getClassLoader().getResource("aoc20_simple.txt")).getFile());
+        File inputFile = new File(Objects.requireNonNull(Solution.class.getClassLoader().getResource("aoc20.txt")).getFile());
         InputStream inputStream = new FileInputStream(inputFile);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
@@ -21,25 +21,23 @@ class Solution {
         AOC aoc = new AOC();
         aoc.parseInput(input);
         //Part 1
-        //System.out.println(aoc.findCornerSum());
+        System.out.println(aoc.findCornerSum());
         //Part 2
         System.out.println(aoc.countSeaBits());
-        //System.out.println("Part 2 - " + aoc.findValidInputsWithUpdates(input));
-
     }
 }
 
 class AOC {
     final int EDGE_TOP = 0;
-    final int EDGE_BOTTOM = 1;
-    final int EDGE_LEFT = 2;
-    final int EDGE_RIGHT = 3;
+    final int EDGE_RIGHT = 1;
+    final int EDGE_BOTTOM = 2;
+    final int EDGE_LEFT = 3;
 
-    class Tile {
+
+    static class Tile {
 
         private String tileId;
         List<List<Boolean>> bits = new ArrayList<>();
-        List<List<Boolean>> cropped = new ArrayList<>();
 
         public List<List<Boolean>> getBits() {
             return bits;
@@ -74,29 +72,36 @@ class AOC {
                     right |= 1 << i;
                 }
             }
-            return new Edge[]{new Edge(top), new Edge(bottom), new Edge(left), new Edge(right)};
+            return new Edge[]{new Edge(top), new Edge(right), new Edge(bottom), new Edge(left)};
         }
 
-        public void crop() {
-            cropped = new ArrayList<>(bits);
-            cropped.remove(0);
-            cropped.remove(cropped.size() - 1);
-            int n = cropped.get(0).size();
-            for (int i = 0; i < cropped.size(); i++) {
-                cropped.get(i).remove(0);
-                cropped.get(i).remove(n - 1);
+        public Tile crop() {
+            Tile croppedTile= new Tile();
+            List<List<Boolean>> cropped = new ArrayList<>();
+
+            int n = bits.size();
+            for (int i = 1; i < n-1; i++) {
+                var line =new ArrayList<>(bits.get(i));
+                line.remove(n - 1);
+                line.remove(0);
+                cropped.add(line);
             }
+
+            croppedTile.setBits(cropped);
+            croppedTile.setTileId(this.tileId);
+            return croppedTile;
         }
 
-        //Rotates clockwise
-        public Tile rotate(){
+        public Tile rotateClockWise(){
             Tile rotated = new Tile();
-            List<List<Boolean>> rotatedBits = new ArrayList<>(bits);
+            List<List<Boolean>> rotatedBits = new ArrayList<>();
             int n=bits.size()-1;
             for (int r = 0; r < bits.size(); r++) {
+                var line= new ArrayList<>(bits.get(r));
                 for (int c = 0; c < bits.size() ; c++) {
-                    rotatedBits.get(r).set(c,bits.get(n-c).get(r));
+                    line.set(c,bits.get(n-c).get(r));
                 }
+                rotatedBits.add(line);
             }
             rotated.setTileId(tileId);
             rotated.setBits(rotatedBits);
@@ -104,7 +109,7 @@ class AOC {
             return rotated;
         }
 
-        public Tile flip(){
+        public Tile flipHorizontal(){
             Tile flipped = new Tile();
             List<List<Boolean>> flippedBits = new ArrayList<>(bits);
             int n=bits.size()-1;
@@ -112,9 +117,26 @@ class AOC {
                 flippedBits.set(n-r,new ArrayList<>(bits.get(r)));
             }
             flipped.setTileId(tileId);
-            flipped.setBits(bits);
+            flipped.setBits(flippedBits);
 
             return flipped;
+        }
+
+        public void print(){
+            System.out.printf("Tile : %s%n",tileId);
+            for (var l:
+                    bits) {
+                System.out.println(Arrays.toString(l.stream().map(x -> x?"#":".").toArray()) );
+            }
+        }
+
+        public int countBits(){
+            int result=0;
+            for (var r:
+                 this.bits) {
+                result+=r.stream().mapToInt(b -> b?1:0).sum();
+            }
+            return result;
         }
 
         @Override
@@ -125,7 +147,7 @@ class AOC {
         }
     }
 
-    class Edge {
+    static class Edge {
         private int checkSum;
 
         public Edge(int checkSum) {
@@ -162,6 +184,237 @@ class AOC {
         }
     }
 
+    class Image {
+        private final Tile[][] mosaic;
+        private String[][] imageInPlace;
+        private final ArrayList<String> seaMonster = new ArrayList<>(
+                Arrays.asList("                  # ",
+                        "#    ##    ##    ###",
+                        " #  #  #  #  #  #   "
+                )
+        );
+        private final int CROP_SIZE= 8;
+
+        public Image() {
+            int s = (int) Math.sqrt(AOC.this.tiles.size());
+            this.mosaic = new Tile[s][s];
+            this.imageInPlace = new String[s*CROP_SIZE][s*CROP_SIZE];
+        }
+
+        public void setTile(Tile topLeftCornerTile, int r, int c) {
+            this.mosaic[r][c] = topLeftCornerTile;
+        }
+
+        public void print() {
+            for (Tile[] value : mosaic) {
+                System.out.println(Arrays.toString(value));
+            }
+        }
+
+        public boolean checkForMatch(Tile trial, int row, int col) {
+            return checkEdge(trial, row, col, EDGE_TOP)
+                    && checkEdge(trial, row, col, EDGE_RIGHT)
+                    && checkEdge(trial, row, col, EDGE_BOTTOM)
+                    && checkEdge(trial, row, col, EDGE_LEFT);
+        }
+
+        public boolean checkTilesSet() {
+            for (Tile[] tile : mosaic) {
+                if (tile == null) {
+                    return false;
+                }
+
+                for (Tile t :
+                        tile) {
+                    if (t == null) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public void findMatchingTiles(List<Tile> corners, HashMap<Integer, List<String>> allEdges) {
+            Tile topLeftCornerTile = getTopLeftCornerTile(corners, allEdges);
+            setTile(topLeftCornerTile, 0, 0);
+            HashSet<String> usedTiles = new HashSet<>();
+            assert topLeftCornerTile != null;
+            usedTiles.add(topLeftCornerTile.tileId);
+
+            int row = 0, col = 1;
+            while (true) {
+                if (col >= mosaic.length) {
+                    row++;
+                    col = 0;
+                }
+
+                if (row >= mosaic.length) {
+                    break;
+                }
+
+                boolean tilePlaced = false;
+                for (var t :
+                        tiles.entrySet()) {
+                    if (usedTiles.contains(t.getKey())) {
+                        continue;
+                    }
+                    Tile currentTile = t.getValue();
+                    ArrayList<Tile> combinations = getAllCombinations(currentTile);
+                    for (Tile trial :
+                            combinations) {
+                        if (checkForMatch(trial, row, col)) {
+                            setTile(trial, row, col);
+                            usedTiles.add(trial.tileId);
+                            tilePlaced = true;
+                            break;
+                        }
+                    }
+                    if (tilePlaced) {
+                        break;
+                    }
+                }
+
+                col++;
+            }
+        }
+
+        public int countSeaBits(){
+            cropTiles();
+            int m = countAllMonsters();
+            int total = getTotalSeaBits();
+            return total - m * 15;
+        }
+
+        private int getTotalSeaBits() {
+            int total=0;
+            for (String[] strings : imageInPlace) {
+                for (int c = 0; c < imageInPlace.length; c++) {
+                    if (strings[c].equals("#")) {
+                        total++;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        private int countAllMonsters() {
+            for (int f = 0; f < 2; f++) {
+                for (int r = 0; r < 4; r++) {
+                    int m = areThereMonsters();
+                    if(m>0){
+                        return m;
+                    }
+                    rotateClockWise();
+                }
+                flipHorizontally();
+            }
+
+            return 0;
+        }
+
+        private void rotateClockWise(){
+           var newImage = new String[imageInPlace.length][imageInPlace.length];
+           int n = imageInPlace.length;
+            for (int r = 0; r < n; r++) {
+                for (int c = 0; c < n; c++) {
+                    newImage[r][c] = imageInPlace[n-c-1][r];
+                }
+            }
+
+            imageInPlace = newImage;
+        }
+
+        public void flipHorizontally(){
+            var newImage = new String[imageInPlace.length][imageInPlace.length];
+            int n=imageInPlace.length;
+            for (int r = 0; r < n; r++) {
+                for (int c = 0; c < n; c++) {
+                    newImage[r][c] = imageInPlace[r][n-c-1];
+                }
+            }
+            imageInPlace = newImage;
+        }
+
+        private int areThereMonsters() {
+            int count =0;
+            for (int r = 0; r + seaMonster.size() < imageInPlace.length; r++) {
+                for (int c = 0; c + seaMonster.get(0).length() < imageInPlace.length; c++) {
+                    if(checkForSeaMonster(r, c)){
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        private boolean checkForSeaMonster(int r, int c) {
+            for (int ro = 0; ro < seaMonster.size(); ro++) {
+                for (int co = 0; co < seaMonster.get(0).length(); co++) {
+                    if(seaMonster.get(ro).charAt(co)!='#'){
+                        continue;
+                    }
+                    if(!imageInPlace[r +ro][c +co].equals("#")){
+                       return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private void cropTiles() {
+            for (int r = 0; r < mosaic.length; r++) {
+                for (int c = 0; c < mosaic.length; c++) {
+                    var b = mosaic[r][c].crop().getBits();
+                    for (int ro = 0; ro < b.size(); ro++) {
+                        for (int co = 0; co < b.size(); co++) {
+                            imageInPlace[r*CROP_SIZE + ro][c*CROP_SIZE + co] = b.get(ro).get(co) ? "#" : ".";
+                        }
+                    }
+                }
+            }
+        }
+
+        private boolean checkEdge(Tile trial, int row, int col, int side) {
+            int r = row, c = col;
+            switch (side) {
+                case EDGE_TOP:
+                    if (row - 1 < 0) {
+                        return true;
+                    }
+                    r = row - 1;
+                    break;
+                case EDGE_RIGHT:
+                    if (col + 1 >= mosaic.length) {
+                        return true;
+                    }
+                    c = col + 1;
+                    break;
+                case EDGE_BOTTOM:
+                    if (row + 1 >= mosaic.length) {
+                        return true;
+                    }
+                    r = row + 1;
+                    break;
+                case EDGE_LEFT:
+                    if (col - 1 < 0) {
+                        return true;
+                    }
+                    c = col - 1;
+                    break;
+                default:
+                    break;
+            }
+
+            Tile neighbour = mosaic[r][c];
+            if (neighbour == null) {
+                return true;
+            }
+            return neighbour.getEdges()[(side + 2) % 4].getCheckSum() == trial.getEdges()[side].getCheckSum();
+        }
+    }
+
     HashMap<String, Tile> tiles = new HashMap<>();
 
     public void parseInput(List<String> input) {
@@ -180,18 +433,16 @@ class AOC {
                 continue;
             }
 
-            if (readTile) {
-                if (line.isEmpty()) {
-                    readTile = false;
-                    tiles.put(id, tile);
-                    continue;
-                }
-                tile.tileId = id;
-                List<Boolean> bits = IntStream.range(0, line.length())
-                        .mapToObj(b -> Boolean.valueOf(line.charAt(b) == '#' ? true : false))
-                        .collect(Collectors.toList());
-                tile.getBits().add(bits);
+            if (line.isEmpty()) {
+                readTile = false;
+                tiles.put(id, tile);
+                continue;
             }
+            tile.tileId = id;
+            List<Boolean> bits = IntStream.range(0, line.length())
+                    .mapToObj(b -> line.charAt(b) == '#')
+                    .collect(Collectors.toList());
+            tile.getBits().add(bits);
         }
 
         tiles.put(id, tile);
@@ -229,7 +480,6 @@ class AOC {
 
     private HashMap<Integer, List<String>> getAllEdges() {
         HashMap<Integer, List<String>> allEdges = new HashMap<>();
-        int i = 0;
         for (Map.Entry<String, Tile> t :
                 tiles.entrySet()) {
             for (Edge edge :
@@ -237,103 +487,79 @@ class AOC {
                 allEdges.computeIfAbsent(edge.getCheckSum(), e -> new ArrayList<>()).add(t.getKey());
                 allEdges.computeIfAbsent(edge.flip().getCheckSum(), e -> new ArrayList<>()).add(t.getKey());
             }
-            i++;
         }
         return allEdges;
     }
 
     //Part 2
     public long countSeaBits() {
-        putTilesInPlace();
-        return 0;
+        Image image = putTilesInPlace();
+        return image.countSeaBits();
     }
 
-    private void putTilesInPlace() {
+    private Image putTilesInPlace() {
 
         HashMap<String, Integer> uniqueEdges = findUniqueEdges();
         List<Tile> corners = new ArrayList<>();
-        List<Tile> sides = new ArrayList<>();
 
         for (var edge :
                 uniqueEdges.entrySet()) {
-            if (edge.getValue() <= 2) {
-                sides.add(tiles.get(edge.getKey()));
-            }
             if (edge.getValue() > 2 && edge.getValue() <= 4) {
                 corners.add(tiles.get(edge.getKey()));
             }
         }
-        System.out.println("Corners : " + corners);
-        System.out.println("Sides : " + sides);
 
-        int s = (int) Math.sqrt(tiles.size());
-        Tile[][] image = new Tile[s][s];
-
-
-        for (int r = 0; r * r < tiles.size(); r++) {
-            System.out.println(Arrays.toString(image[r]));
-        }
-        System.out.println("-----------");
+        Image image = new Image();
 
         HashMap<Integer, List<String>> allEdges = getAllEdges();
-        Tile topLeftTile = tiles.get(corners.get(0));
+        image.findMatchingTiles(corners, allEdges);
+        return image;
 
+    }
+
+
+    private ArrayList<Tile> getAllCombinations(Tile tile) {
+        ArrayList<Tile> combinations = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            for (int r = 0; r < 4; r++) {
+                tile = tile.rotateClockWise();
+                combinations.add(tile);
+
+            }
+            tile = tile.flipHorizontal();
+        }
+
+        return combinations;
+    }
+
+    private Tile getTopLeftCornerTile(List<Tile> corners,HashMap<Integer, List<String>> allEdges){
+        Tile trial;
         for (Tile c :
                 corners) {
-            boolean found=false;
+            trial = c;
             for (int r = 0; r < 4; r++) {
                 Edge[] edges = c.getEdges();
                 if(matchRandB(allEdges,edges)){
-                    topLeftTile = c;
-                    found=true;
-                } else{
-                    edges = c.flip().getEdges();
+                    return trial;
+                }else{
+                    var flipped = trial.flipHorizontal();
+                    edges = flipped.getEdges();
                     if(matchRandB(allEdges,edges)){
-                        topLeftTile = c;
-                        found=true;
+                        return flipped;
                     }
                 }
-                System.out.println("Attempt " + c + " Result="+found);
 
-                c=c.rotate();
-            }
-            if(found){
-                break;
+                trial=trial.rotateClockWise();
             }
         }
 
-        image[0][0] = topLeftTile;
-        HashSet<Tile> usedTiles = new HashSet<>();
-        usedTiles.add(topLeftTile);
-
-        /*
-        HashMap<Tile,String> allTilePermutations = new HashMap<>();
-        for (var t:
-             tiles.entrySet()) {
-            for (int f = 0; f <= 1; f++) {
-                for (int r = 0; r < 4; r++) {
-                    allTilePermutations.put(t.getValue().rotate(),t.getKey());
-                }
-
-            }
-        }*/
-
-
-        for (int r = 0; r * r < tiles.size(); r++) {
-            System.out.println(Arrays.toString(image[r]));
-        }
+        return null;
     }
 
     private boolean matchRandB(HashMap<Integer, List<String>> allEdges, Edge[] edges){
         List<String> rEdges = allEdges.get(edges[EDGE_RIGHT].getCheckSum());
         List<String> bEdges = allEdges.get(edges[EDGE_BOTTOM].getCheckSum());
 
-        if (rEdges!=null && bEdges!=null &  rEdges.size() >= 2 && bEdges.size() >= 2) {
-            return  true;
-        }
-
-        return false;
+        return rEdges != null && bEdges != null & rEdges.size() >= 2 && bEdges.size() >= 2;
     }
-
-
 }
