@@ -1,10 +1,7 @@
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 
 class Solution {
@@ -22,32 +19,84 @@ class Solution {
         AOC aoc = new AOC();
         //Part 1
         System.out.println(aoc.countBlackTiles(input));
+        //Part 2
+        System.out.println(aoc.countBlackTilesAfter100Days(input));
     }
 
 
 }
 
 class AOC {
-    static class Grid {
-        HashSet<Pair<Integer,Integer>> blackTiles = new HashSet<>();
+        static class Grid {
+            private List<Pair<Integer, Integer>> blackTiles = new ArrayList<>();
 
-        public void flip(Pair<Integer,Integer> tile){
-            System.out.println("Flipping tile: "+tile.toString() + " " + blackTiles.contains(tile));
-            if(blackTiles.contains(tile)){
-                blackTiles.remove(tile);
-            }else{
-                blackTiles.add(tile);
+            public List<Pair<Integer, Integer>> getBlackTiles() {
+                return blackTiles;
+            }
+
+            public void flip(Pair<Integer, Integer> tile) {
+                if (blackTiles.contains(tile)) {
+                    blackTiles.remove(tile);
+                } else {
+                    blackTiles.add(tile);
+                }
+            }
+
+            public int countAdjacentBlackTiles(Pair<Integer, Integer> tile) {
+                return (int) Arrays.stream(getNeighbours(tile))
+                        .filter(t -> blackTiles.contains(t))
+                        .count();
+            }
+
+            public Pair<Integer, Integer>[] getNeighbours(Pair<Integer, Integer> tile) {
+                return new Pair[]{
+                        Pair.of(tile.getLeft() + 1, tile.getRight()),
+                        Pair.of(tile.getLeft() - 1, tile.getRight()),
+                        Pair.of(tile.getLeft(), tile.getRight() + 1),
+                        Pair.of(tile.getLeft() - 1, tile.getRight() + 1),
+                        Pair.of(tile.getLeft() + 1, tile.getRight() - 1),
+                        Pair.of(tile.getLeft(), tile.getRight() - 1)
+                };
+            }
+
+            public int getFlippedCount() {
+
+                return blackTiles.size();
+            }
+
+            public void dailyFlip() {
+                HashMap<Pair<Integer,Integer>,Boolean> allTiles = new HashMap<>();
+                for (var tile:
+                     blackTiles) {
+                    allTiles.put(tile,true);
+                    for (var neighbour:
+                         getNeighbours(tile)) {
+                        if(!blackTiles.contains(neighbour)){
+                            allTiles.put(neighbour,false);
+                        }
+                    }
+                }
+                List<Pair<Integer, Integer>> newList = new ArrayList<>();
+                for (var tileMap:
+                     allTiles.entrySet()) {
+                    var tile = tileMap.getKey();
+                    var n = countAdjacentBlackTiles(tile);
+                    if(tileMap.getValue()){
+                        if(n==1 || n==2){
+                            newList.add(tile);
+                        }
+                    }else{
+                        if(n==2){
+                            newList.add(tile);
+                        }
+                    }
+                }
+                blackTiles = newList;
             }
         }
 
-        public int getFlippedCount(){
-            System.out.println(blackTiles);
-            return blackTiles.size();
-        }
-    }
-
     Grid grid = new Grid();
-
+    final int TOTAL_MOVES = 100;
     final String NORTH_EAST = "ne";
     final String NORTH_WEST = "nw";
     final String SOUTH_EAST = "se";
@@ -56,8 +105,23 @@ class AOC {
     final String WEST = "w";
 
     public int countBlackTiles(List<String> input) {
+        setupInitial(input);
+
+        return grid.getFlippedCount();
+    }
+
+    public int countBlackTilesAfter100Days(List<String> input) {
+        setupInitial(input);
+        for (int i = 0; i < TOTAL_MOVES; i++) {
+            grid.dailyFlip();
+            System.out.printf("Day %d: %d%n",i+1,grid.getFlippedCount());
+        }
+        return grid.getFlippedCount();
+    }
+
+    private void setupInitial(List<String> input) {
         for (var line:
-             input) {
+                input) {
             Pair<Integer, Integer> tile = Pair.of(0, 0);
             while (line.length() > 0) {
                 if (line.startsWith(EAST)) {
@@ -80,10 +144,8 @@ class AOC {
                     line = line.substring(2);
                 }
             }
-            System.out.println(tile);
+
             grid.flip(tile);
         }
-
-        return grid.getFlippedCount();
     }
 }
